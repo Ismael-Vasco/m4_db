@@ -1,4 +1,3 @@
-
 /*
 -----Nivel 1 — Fundamentos (Exploración básica)-----------
 1. Listar todos los usuarios.
@@ -83,6 +82,123 @@ SELECT is_active, count(*) FROM users GROUP BY is_active;
 SELECT AVG(monthly_income) AS Pormedio_general from users
 --5
 SELECT role, AVG(monthly_income) AS Pormedio_general from users GROUP BY role;
+
+/*
+--------------------Nivel 4 — Pensamiento analítico
+1. Mostrar profesiones con más de 10 personas.
+2. Mostrar la ciudad con más usuarios.
+3. Comparar cantidad de menores vs mayores de edad.
+4. Promedio de ingresos por ciudad ordenado de mayor a menor.
+5. Mostrar las 5 personas con mayor ingreso.
+
+Aquí ya estás usando GROUP BY, ORDER BY, LIMIT y HAVING.
+*/
+
+--1
+SELECT profession, COUNT(*) AS total_personas
+FROM users
+GROUP BY profession
+HAVING COUNT(*) > 35;
+
+--2
+SELECT city,count(*) as total_personas
+FROM users
+group by city
+ORDER BY city DESC
+LIMIT 1;
+
+--3
+SELECT 
+    SUM(
+    CASE WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18 
+    	THEN 1 
+    	ELSE 0 
+    END) AS menores,
+    
+    SUM(
+    CASE WHEN TIMESTAMPDIFF(YEAR, birth_date , CURDATE()) >= 18 
+    THEN 1 
+    ELSE 0 
+    END) AS mayores
+FROM users;
+
+--4
+SELECT city, AVG(monthly_income) AS promedio_ingresos
+FROM users
+GROUP BY city
+ORDER BY promedio_ingresos DESC;
+
+--5
+SELECT first_name , monthly_income 
+FROM users
+ORDER BY monthly_income DESC
+LIMIT 5;
+
+
+/*
+--------------------Nivel 5 — Nivel Ingeniero
+1. Clasificar usuarios como:
+
+"Menor"
+"Adulto"
+"Adulto mayor"
+
+2. Mostrar cuántos usuarios hay en cada clasificación anterior.
+3. Ranking de ingresos por ciudad.
+4. Profesión con mayor ingreso promedio.
+5. Mostrar usuarios cuyo ingreso esté por encima del promedio general.
+*/
+
+-- 1
+SELECT 
+    first_name ,
+    birth_date ,
+    TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) AS edad,
+    CASE 
+        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18 THEN 'Menor'
+        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 18 AND 59 THEN 'Adulto'
+        ELSE 'Adulto mayor'
+    END AS clasificacion
+FROM users;
+
+-- 2
+SELECT 
+    CASE 
+        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18 THEN 'Menor'
+        WHEN TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 18 AND 59 THEN 'Adulto'
+        ELSE 'Adulto mayor'
+    END AS clasificacion,
+    COUNT(*) AS total
+FROM users
+GROUP BY clasificacion;
+
+-- 3
+SELECT 
+    city,
+    SUM(monthly_income ) AS total_ingresos,
+    RANK() OVER (ORDER BY SUM(monthly_income) DESC) AS ranking
+FROM users
+GROUP BY city;
+
+-- 4
+SELECT profession, AVG(monthly_income) AS ingreso_promedio
+FROM users
+GROUP BY profession
+ORDER BY ingreso_promedio DESC
+LIMIT 1;
+
+-- 5
+SELECT 
+    u.*,
+    (SELECT AVG(monthly_income) FROM users) AS promedio_general
+FROM users u
+WHERE u.monthly_income > (
+    SELECT AVG(monthly_income)
+    FROM users
+);
+
+
+
 
 
 
